@@ -8,16 +8,12 @@ AutoMenu as back end (`automenu-api`)
 
 ### Back end plan
 
-                      +-------------------+
-                      |   FastAPI App     |
-                      +---------+---------+
-                                |
-        +-----------------------+-----------------------+
-        |                       |                       |
-+-------v-------+       +-------v-------+       +-------v-------+
-|  Auth Router  |       |  Meals Router |       | Planner Router|
-| (/auth/login) |       |  (/api/meals) |       | (/api/layout) |
-+---------------+       +---------------+       +---------------+
+```mermaid
+graph TD
+    App[FastAPI App] --> Auth[Auth Router<br/>/auth/login]
+    App --> Meals[Meals Router<br/>/api/meals]
+    App --> Planner[Planner Router<br/>/api/layout]
+```
 
 + planning endpoint? (`/api/v1/plans/generate`)
 + External API Integration? (Edamam or USDA Food Data Central)
