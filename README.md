@@ -38,7 +38,10 @@ uv run pre-commit install
 
 ### Running the entire app
 
-...
+```bash
+# Run the backend
+uv run fastapi dev
+```
 
 ## Concepts to use
 
