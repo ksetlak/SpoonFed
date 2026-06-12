@@ -14,8 +14,8 @@ AutoMenu as back end (`automenu-api`)
                                 |
         +-----------------------+-----------------------+
         |                       |                       |
-        v                       v                       v
-+---------------+       +---------------+       +---------------+
+        |                       |                       |
++-------v-------+       +-------v-------+       +-------v-------+
 |  Auth Router  |       |  Meals Router |       | Planner Router|
 | (/auth/login) |       |  (/api/meals) |       | (/api/layout) |
 +---------------+       +---------------+       +---------------+
@@ -48,4 +48,3 @@ Potential models:
 - [Bring!](https://getbring.com/en/home)
 - [Cebulko](https://cebulko.app/)
 - [FeedMe](https://feed-me.app/)
-- 
