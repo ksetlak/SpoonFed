@@ -14,7 +14,6 @@ AutoMenu as back end (`automenu-api`)
                                 |
         +-----------------------+-----------------------+
         |                       |                       |
-        |                       |                       |
 +-------v-------+       +-------v-------+       +-------v-------+
 |  Auth Router  |       |  Meals Router |       | Planner Router|
 | (/auth/login) |       |  (/api/meals) |       | (/api/layout) |
@@ -29,6 +28,21 @@ Potential models:
 - User: id, username, hashed_password, daily_calorie_target.
 - Meal: id, name, calories, protein, carbs, fat, last_suggested_at.
 - MealHistory: id, user_id, meal_id, date_consumed
+
+## Quickstart
+
+### Setup
+
+After cloning the repo, make sure `uv` is installed.
+
+```bash
+uv sync
+uv run pre-commit install
+```
+
+### Running the entire app
+
+...
 
 ## Concepts to use
 
