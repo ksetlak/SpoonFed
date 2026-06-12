@@ -7,3 +7,35 @@ requires-python = ">=3.12"
 dependencies = [
     "ruff>=0.15.17",
 ]
+[project]
+name = "automenu-api"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "ruff>=0.15.17",
+]
+
+## Ruff
+[tool.ruff]
+# Docs: https://docs.astral.sh/ruff/configuration/
+line-length = 120
+exclude = [".venv/"]
+
+[tool.ruff.lint]
+# You probably want to add more rules here. See docs.
+# https://docs.astral.sh/ruff/rules/
+select = [
+    "B",   # bugs (https://pypi.org/project/flake8-bugbear/)
+    "E",   # pycodestyle errors (https://pypi.org/project/pycodestyle/)
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes (https://pypi.org/project/pyflakes/)
+    "I",   # isort (https://pypi.org/project/isort/)
+    "C90", # complexity (https://pypi.org/project/mccabe/)
+    "S",   # security (https://pypi.org/project/flake8-bandit/)
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Allow asserts in tests
+"tests/**/*.py" = ["S101"]
