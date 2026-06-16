@@ -35,6 +35,7 @@ After cloning the repo, make sure `uv` is installed.
 uv sync
 uv run pre-commit install
 docker run --name automenu-db -e POSTGRES_PASSWORD=mysecretpassword -p 5432:5432 -v pgdata:/var/lib/postgresql -d postgres
+py seed.py
 ```
 
 ### Running the entire app
@@ -42,7 +43,6 @@ docker run --name automenu-db -e POSTGRES_PASSWORD=mysecretpassword -p 5432:5432
 ```bash
 # Run the backend
 docker start automenu-db
-py seed.py
 uv run fastapi dev
 ```
 
