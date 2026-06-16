@@ -18,7 +18,7 @@ graph TD
 + planning endpoint? (`/api/v1/plans/generate`)
 + External API Integration? (Edamam or USDA Food Data Central)
 
-ORM choice: SQLModel (to acoid writing schema twice, once for Pydantic and once for SQLAlchemy)
+ORM choice: SQLAlchemy. SQLModel was taken into account, but I want to have more work to do on purpose, to have more opportunity to practice. Specifically, to practice Pydantic in this case.
 
 Potential models:
 - User: id, username, hashed_password, daily_calorie_target.
