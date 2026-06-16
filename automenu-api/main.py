@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from db import connect_db
 from models import Meal
@@ -7,22 +7,23 @@ from models import Meal
 app = FastAPI()
 
 engine = connect_db()
-session = Session(engine)
+session = AsyncSession(engine)
 
 
 @app.get("/api/meals/{meal_id}")
 async def get_meal(meal_id):
-    meal = session.get(Meal, meal_id)
-    if not meal:
-        return {"error": "Meal with this ID could not be found."}, 404
-    else:
-        meal_dict = {
-            "id": meal.id,
-            "name": meal.name,
-            "recipe": meal.recipe,
-            "calories": meal.calories,
-            "fat": meal.fat,
-            "carbs": meal.carbs,
-            "protein": meal.protein,
-        }
-        return meal_dict  # TODO: Update once pydantic is added: https://chat.mistral.ai/chat/5f4c9201-a25b-49ed-aff8-0a2f97db7850s
+    async with AsyncSession(engine) as session:
+        meal = await session.get(Meal, meal_id)
+        if not meal:
+            return {"error": "Meal with this ID could not be found."}, 404
+        else:
+            meal_dict = {
+                "id": meal.id,
+                "name": meal.name,
+                "recipe": meal.recipe,
+                "calories": meal.calories,
+                "fat": meal.fat,
+                "carbs": meal.carbs,
+                "protein": meal.protein,
+            }
+            return meal_dict  # TODO: Update once pydantic is added: https://chat.mistral.ai/chat/5f4c9201-a25b-49ed-aff8-0a2f97db7850s
