@@ -1,4 +1,6 @@
-from sqlalchemy.orm import Session
+import asyncio
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from db import connect_db
 from models import Base, Meal
@@ -6,8 +8,7 @@ from models import Base, Meal
 seed_meals = [
     {
         "name": "Lentil & Tomato Stew",
-        "recipe": "Sauté 1 diced onion, add 1 cup red lentils, 2 cups water, 1 cup przecier pomidorowy, and spices.\
-            Simmer 25 mins.",
+        "recipe": "Sauté 1 diced onion, add 1 cup red lentils, 2 cups water, 1 cup przecier pomidorowy, and spices. Simmer 25 mins.",  # noqa
         "calories": 320,
         "carbs": 55.0,
         "fat": 2.5,
@@ -23,8 +24,7 @@ seed_meals = [
     },
     {
         "name": "Chickpea & Spinach Curry",
-        "recipe": "Cook 1 can chickpeas, 2 cups spinach, 1 can diced tomatoes, coconut milk, and curry paste. Simmer 15\
-              mins.",
+        "recipe": "Cook 1 can chickpeas, 2 cups spinach, 1 can diced tomatoes, coconut milk, and curry paste. Simmer 15 mins.",  # noqa
         "calories": 400,
         "carbs": 45.0,
         "fat": 14.0,
@@ -40,8 +40,7 @@ seed_meals = [
     },
     {
         "name": "Soy Chunks & Veggie Bowl",
-        "recipe": "Rehydrate 100g soy chunks, mix with 1 cup frozen peas, carrots, and olive oil. Bake at 180°C for 15\
-              mins.",
+        "recipe": "Rehydrate 100g soy chunks, mix with 1 cup frozen peas, carrots, and olive oil. Bake at 180°C for 15 mins.",  # noqa
         "calories": 300,
         "carbs": 25.0,
         "fat": 8.0,
@@ -49,9 +48,17 @@ seed_meals = [
     },
 ]
 
-engine = connect_db()
-Base.metadata.create_all(engine)
-with Session(engine) as session:
-    for meal in seed_meals:
-        session.add(Meal(**meal))
-    session.commit()
+
+async def seed():
+    engine = connect_db()
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
+    async with AsyncSession(engine) as session:
+        for meal in seed_meals:
+            session.add(Meal(**meal))
+        await session.commit()
+
+
+if __name__ == "__main__":
+    asyncio.run(seed())
