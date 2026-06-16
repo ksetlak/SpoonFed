@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpoonFed</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    body { font-family: sans-serif; max-width: 700px; margin: 2rem auto; padding: 0 1rem; }
+    #input-area { margin-bottom: 2rem; }
+    #id-input { width: 6em; }
+    #error { color: red; margin-top: 1rem; }
+    #recipe { line-height: 1.6; }
+    #recipe h1 { margin-bottom: 0.2em; }
+    .nutrients { list-style: none; padding: 0; display: flex; gap: 1.5em; }
+    .nutrients li { background: #f0f0f0; padding: 0.3em 0.8em; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div id="input-area">
+    <label for="id-input">Recipe ID:</label>
+    <input type="text" id="id-input" autofocus>
+    <button id="fetch-btn">Go</button>
+    <div id="error"></div>
+  </div>
+  <div id="recipe"></div>
+
+  <script>
+    const input = document.getElementById('id-input');
+    const btn = document.getElementById('fetch-btn');
+    const errorDiv = document.getElementById('error');
+    const recipeDiv = document.getElementById('recipe');
+
+    function clearError() { errorDiv.textContent = ''; }
+
+    async function fetchMeal() {
+      clearError();
+      const val = input.value.trim();
+      if (!val || !Number.isInteger(Number(val))) {
+        errorDiv.textContent = 'Please enter a valid integer ID.';
+        return;
+      }
+      try {
+        const res = await fetch(`http://127.0.0.1:8000/api/meals/${val}`);
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          errorDiv.textContent = data.error || 'Meal not found.';
+          return;
+        }
+        recipeDiv.innerHTML =
+          `<h1>${data.name}</h1>` +
+          marked.parse(data.recipe) +
+          `<ul class="nutrients">` +
+          `<li>Calories: ${data.calories}</li>` +
+          `<li>Fat: ${data.fat}g</li>` +
+          `<li>Carbs: ${data.carbs}g</li>` +
+          `<li>Protein: ${data.protein}g</li>` +
+          `</ul>`;
+      } catch (e) {
+        errorDiv.textContent = 'Could not reach the server.';
+      }
+      input.value = '';
+      input.focus();
+    }
+
+    btn.addEventListener('click', fetchMeal);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') fetchMeal(); });
+  </script>
+</body>
+</html>
