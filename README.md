@@ -53,6 +53,12 @@ uv run fastapi dev
 - Tests
 - Cloud
 
+## Personas
+
+Eater = a simple user that just cooks based on recipes retrieved from the app.
+
+Chef = a curator that can add new recipes and modify existing ones.
+
 ## Inspirations
 
 - [Paprika Recipe Manager](https://www.paprikaapp.com/)
