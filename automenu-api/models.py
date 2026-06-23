@@ -24,4 +24,5 @@ class User(Base):
     __tablename__ = "users"
     id: Mapped[int] = mapped_column(primary_key=True)
     username: Mapped[str] = mapped_column(String(30))
-    hashed_password: Mapped[str] = mapped_column(String(60))  # How long will the hash be?
+    hashed_password: Mapped[str] = mapped_column(String(60))
+    password_salt: Mapped[str] = mapped_column(String(60))
