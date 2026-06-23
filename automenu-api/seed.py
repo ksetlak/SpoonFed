@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from db import connect_db
 from models import Base, Meal, User
-from security import hash_password
+from security import hash_and_salt_password
 
 seed_users = [
     {
@@ -74,7 +74,9 @@ async def seed_interactive(engine):
     async with AsyncSession(engine) as session:
         for user in seed_users:
             password = getpass(f"Provide a password for user: {user['username']} ...\n")
-            user["hashed_password"] = hash_password(password)
+            hash, salt = hash_and_salt_password(password)
+            user["hashed_password"] = hash
+            user["password_salt"] = salt
             session.add(User(**user))
         await session.commit()
 
