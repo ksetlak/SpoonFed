@@ -18,3 +18,10 @@ class Meal(Base):
 
     def __repr__(self) -> str:
         return f"Meal (id={self.id!r}, name={self.name!r})"
+
+
+class User(Base):
+    __tablename__ = "users"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    username: Mapped[str] = mapped_column(String(30))
+    hashed_password: Mapped[str] = mapped_column(String(60))  # How long will the hash be?

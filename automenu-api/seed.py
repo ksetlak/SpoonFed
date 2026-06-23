@@ -1,9 +1,17 @@
 import asyncio
+from getpass import getpass
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db import connect_db
-from models import Base, Meal
+from models import Base, Meal, User
+from security import hash_password
+
+seed_users = [
+    {
+        "username": "admin",
+    }
+]
 
 seed_meals = [
     {
@@ -49,8 +57,7 @@ seed_meals = [
 ]
 
 
-async def seed():
-    engine = connect_db()
+async def seed_unattended():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
@@ -60,5 +67,19 @@ async def seed():
         await session.commit()
 
 
+async def seed_interactive():
+    async with AsyncSession(engine) as session:
+        for user in seed_users:
+            password = getpass(f"Provide a password for user: {user['username']} ...\n")
+            user["hashed_password"] = hash_password(password)
+            session.add(User(**user))
+        await session.commit()
+
+
+async def gathered():
+    await asyncio.gather(seed_unattended(), seed_interactive())
+
+
 if __name__ == "__main__":
-    asyncio.run(seed())
+    engine = connect_db()
+    asyncio.run(gathered())
