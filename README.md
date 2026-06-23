@@ -38,6 +38,10 @@ docker run --name automenu-db -e POSTGRES_PASSWORD=mysecretpassword -p 5432:5432
 py seed.py
 ```
 
+### Running tests
+
+On Windows: `automenu_api/.venv/Scripts/python.exe -m pytest tests_backend/ -v`
+
 ### Running the entire app
 
 ```bash
