@@ -10,3 +10,7 @@ def test_hash_and_salt_password():
 def test_verify_password():
     hash, salt = hash_and_salt_password(password)
     assert verify_password(hash, salt, password)
+
+
+# TODO
+# def test_create_access_token():

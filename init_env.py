@@ -6,9 +6,10 @@ ENV_TEMPLATE = ".env.example"
 
 # Would be cool to use ENV_TEMPLATE as a dynamic template, but how to determine how to populate a field dynamically?
 TEMPLATE_CONTENT = """DATABASE_URL=postgresql+asyncpg://user:PASSWORD_PLACEHOLDER@localhost:5432
-JWT_SECRET_KEY=JWT_SECRET_PLACEHOLDER
-JWT_ALGORITHM=HS256
 DEBUG=True
+JWT_ALGORITHM=HS256
+JWT_SECRET_KEY=JWT_SECRET_PLACEHOLDER
+JWT_VALIDITY=8760
 """
 
 
