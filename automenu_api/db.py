@@ -1,9 +1,9 @@
 from sqlalchemy.ext.asyncio import create_async_engine
 
+from config import settings
 
-# engine = create_engine("sqlite+pysqlite:///:memory:", echo=True)
+
 # dialect+DBAPI
 def connect_db():
-    # TODO: Will need config management of course.
-    engine = create_async_engine("postgresql+asyncpg://postgres:mysecretpassword@localhost:5432", echo=True)
+    engine = create_async_engine(settings.database_url, echo=True)
     return engine

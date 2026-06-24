@@ -34,19 +34,27 @@ After cloning the repo, make sure `uv` is installed.
 ```bash
 uv sync
 uv run pre-commit install
-docker run --name automenu-db -e POSTGRES_PASSWORD=mysecretpassword -p 5432:5432 -v pgdata:/var/lib/postgresql -d postgres
-py seed.py
+uv run init_env.py
+```
+
+... then get the DB password from the .env file and use with the next command:
+
+```bash
+podman machine start
+podman run --name automenu-db -e POSTGRES_PASSWORD=mysecretpassword -p 5432:5432 -v pgdata:/var/lib/postgresql -d docker.io/library/postgres
+uv run seed.py
 ```
 
 ### Running tests
 
+MacOS / Linux: `uv run pytest tests_backend -v`
 On Windows: `automenu_api/.venv/Scripts/python.exe -m pytest tests_backend/ -v`
 
 ### Running the entire app
 
 ```bash
 # Run the backend
-docker start automenu-db
+podman start automenu-db
 uv run fastapi dev
 ```
 
