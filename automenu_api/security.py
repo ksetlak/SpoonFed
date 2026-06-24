@@ -34,3 +34,8 @@ def create_access_token(sub: int, expires_delta: timedelta = JWT_VALIDITY) -> st
     encoded_jwt = jwt.encode(data, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 
     return encoded_jwt
+
+
+def validate_access_token(encoded: str | bytes, user_id: int) -> bool:
+    payload = jwt.decode(encoded, settings.jwt_secret_key, algorithms=settings.jwt_algorithm)
+    return int(payload["sub"]) == user_id
