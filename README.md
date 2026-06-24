@@ -47,7 +47,7 @@ uv run seed.py
 
 ### Running tests
 
-MacOS / Linux: `uv run pytest tests_backend -v`
+MacOS / Linux: `uv run pytest -c pyproject.toml ../tests_backend -v`
 On Windows: `automenu_api/.venv/Scripts/python.exe -m pytest tests_backend/ -v`
 
 ### Running the entire app

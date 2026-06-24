@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     jwt_secret_key: str
     jwt_validity: int
 
-    model_config = SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(env_file="../.env")
 
 
 settings = Settings()

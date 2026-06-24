@@ -1,4 +1,9 @@
-from automenu_api.security import hash_and_salt_password, verify_password
+from automenu_api.security import (
+    hash_and_salt_password,
+    verify_password,
+    create_access_token,
+    validate_access_token,
+)
 
 password = "super-secret-password"
 
@@ -12,5 +17,9 @@ def test_verify_password():
     assert verify_password(hash, salt, password)
 
 
-# TODO
-# def test_create_access_token():
+user_id = 0
+
+
+def test_access_token_roundtrip():
+    token = create_access_token(0)
+    assert validate_access_token(token, 0)
