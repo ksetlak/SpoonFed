@@ -31,9 +31,8 @@ session = AsyncSession(engine)
 @app.post("/auth/login")
 async def authenticate(username: Annotated[str, Form()], password: Annotated[str, Form()]):
     async with AsyncSession(engine) as session:
-        query = select(User).where(User.username == username)
-        result = await session.execute(query)
-        user = result.scalar_one_or_none()
+        result = await session.scalars(select(User).where(User.username == username))
+        user = result.one_or_none()
     if not user:
         raise HTTPException(status_code=401, detail="Invalid username or password.")
     authenticated: bool = verify_password(user.hashed_password, user.password_salt, password)
