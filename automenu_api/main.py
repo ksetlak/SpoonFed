@@ -1,9 +1,13 @@
-from fastapi import FastAPI, HTTPException
+from typing import Annotated
+
+from fastapi import FastAPI, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db import connect_db
-from models import Meal
+from models import Meal, User
+from security import create_access_token, verify_password
 
 app = FastAPI()
 
@@ -22,6 +26,21 @@ app.add_middleware(
 
 engine = connect_db()
 session = AsyncSession(engine)
+
+
+@app.post("/auth/login")
+async def authenticate(username: Annotated[str, Form()], password: Annotated[str, Form()]):
+    async with AsyncSession(engine) as session:
+        query = select(User).where(User.username == username)
+        result = await session.execute(query)
+        user = result.scalar_one_or_none()
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid username or password.")
+    authenticated: bool = verify_password(user.hashed_password, user.password_salt, password)
+    if not authenticated:
+        raise HTTPException(status_code=401, detail="Invalid username or password.")
+    jwt = create_access_token(user.id)
+    return jwt
 
 
 @app.get("/api/meals/{meal_id}")
