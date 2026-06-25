@@ -47,7 +47,6 @@ app.add_middleware(
 )
 
 engine = connect_db()
-session = AsyncSession(engine)
 
 
 @app.post("/auth/login")
