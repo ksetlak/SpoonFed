@@ -64,13 +64,18 @@ async def authenticate(username: Annotated[str, Form()], password: Annotated[str
     return jwt
 
 
-@app.put("/api/meals")
-async def create_meal(meal: MealCreateModel):
+@app.post("/api/meals", response_model=MealReadModel)
+async def create_meal(meal_in: MealCreateModel):
+    async with AsyncSession(engine) as session:
+        meal = Meal(**meal_in.model_dump())
+        session.add(meal)
+        await session.commit()
+        await session.refresh(meal)  # This populates the db_meal.id
     return meal
 
 
 @app.get("/api/meals/{meal_id}")
-async def get_meal(meal_id: int):
+async def retrieve_meal(meal_id: int):
     async with AsyncSession(engine) as session:
         meal = await session.get(Meal, meal_id)
         if not meal:
