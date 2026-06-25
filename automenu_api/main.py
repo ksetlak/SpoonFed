@@ -2,12 +2,34 @@ from typing import Annotated
 
 from fastapi import FastAPI, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db import connect_db
 from models import Meal, User
 from security import create_access_token, verify_password
+
+
+class MealBase(BaseModel):
+    name: str
+    recipe: str
+    calories: int
+    carbs: float
+    fat: float
+    protein: float
+
+    class Config:
+        from_attributes = True
+
+
+class MealCreateModel(MealBase):
+    pass
+
+
+class MealReadModel(MealBase):
+    id: int
+
 
 app = FastAPI()
 
@@ -49,13 +71,4 @@ async def get_meal(meal_id: int):
         if not meal:
             raise HTTPException(status_code=404, detail="Meal with this ID could not be found.")
         else:
-            meal_dict = {
-                "id": meal.id,
-                "name": meal.name,
-                "recipe": meal.recipe,
-                "calories": meal.calories,
-                "fat": meal.fat,
-                "carbs": meal.carbs,
-                "protein": meal.protein,
-            }
-            return meal_dict  # TODO: Update once pydantic is added: https://chat.mistral.ai/chat/5f4c9201-a25b-49ed-aff8-0a2f97db7850s
+            return MealReadModel.model_validate(meal)
