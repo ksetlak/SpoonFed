@@ -40,11 +40,9 @@ oauth2_scheme = HTTPBearer()
 
 async def verify_admin_access(token: Annotated[str, Depends(oauth2_scheme)]):
     try:
-        print(f"token: {token}")
         token_bytes = token.credentials.encode("utf-8")
         decoded_token = decode(token_bytes, settings.jwt_secret_key, settings.jwt_algorithm)
-    except PyJWTError as e:
-        print(f"DEBUG: PyJWT validation failed with error: {repr(e)}")
+    except PyJWTError:
         raise HTTPException(status_code=401, detail="Could not validate credentials") from None
     if validate_access_token(token_bytes, decoded_token["sub"]):
         raise HTTPException(status_code=401, detail="Could not validate credentials")
