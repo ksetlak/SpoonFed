@@ -44,7 +44,7 @@ async def verify_admin_access(token: Annotated[str, Depends(oauth2_scheme)]):
         decoded_token = decode(token_bytes, settings.jwt_secret_key, settings.jwt_algorithm)
     except PyJWTError:
         raise HTTPException(status_code=401, detail="Could not validate credentials") from None
-    if not validate_access_token(token_bytes, decoded_token["sub"]):
+    if not validate_access_token(token_bytes, int(decoded_token["sub"])):
         raise HTTPException(status_code=401, detail="Could not validate credentials")
     return int(decoded_token["sub"]) == 1
 
