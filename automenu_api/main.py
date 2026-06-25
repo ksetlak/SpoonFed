@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import FastAPI, Form, HTTPException
+from fastapi import FastAPI, Form, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -64,7 +64,7 @@ async def authenticate(username: Annotated[str, Form()], password: Annotated[str
     return jwt
 
 
-@app.post("/api/meals", response_model=MealReadModel)
+@app.post("/api/meals", response_model=MealReadModel, status_code=status.HTTP_201_CREATED)
 async def create_meal(meal_in: MealCreateModel):
     async with AsyncSession(engine) as session:
         meal = Meal(**meal_in.model_dump())
@@ -74,7 +74,7 @@ async def create_meal(meal_in: MealCreateModel):
     return meal
 
 
-@app.get("/api/meals/{meal_id}")
+@app.get("/api/meals/{meal_id}", status_code=status.HTTP_200_OK)
 async def retrieve_meal(meal_id: int):
     async with AsyncSession(engine) as session:
         meal = await session.get(Meal, meal_id)
@@ -84,7 +84,7 @@ async def retrieve_meal(meal_id: int):
             return MealReadModel.model_validate(meal)
 
 
-@app.patch("/api/meals/{meal_id}", response_model=MealReadModel)
+@app.patch("/api/meals/{meal_id}", response_model=MealReadModel, status_code=status.HTTP_200_OK)
 async def update_meal(updated_meal: MealReadModel):
     async with AsyncSession(engine) as session:
         meal = await session.get(Meal, updated_meal.id)
