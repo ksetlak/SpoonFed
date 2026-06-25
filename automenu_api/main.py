@@ -97,3 +97,15 @@ async def update_meal(updated_meal: MealReadModel):
             await session.commit()
             await session.refresh(meal)
     return meal
+
+
+@app.delete("/api/meals/{meal_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_meal(meal_id: int):
+    async with AsyncSession(engine) as session:
+        meal = await session.get(Meal, meal_id)
+        if not meal:
+            raise HTTPException(status_code=404, detail="Meal with this ID could not be found.")
+        else:
+            session.delete(meal)
+            await session.commit()
+    return  # Or return None?
