@@ -54,6 +54,7 @@ On Windows: `automenu_api/.venv/Scripts/python.exe -m pytest tests_backend/ -v`
 
 ```bash
 # Run the backend
+podman machine start
 podman start automenu-db
 uv run fastapi dev
 ```
