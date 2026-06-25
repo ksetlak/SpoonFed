@@ -70,7 +70,7 @@ async def create_meal(meal_in: MealCreateModel):
         meal = Meal(**meal_in.model_dump())
         session.add(meal)
         await session.commit()
-        await session.refresh(meal)  # This populates the db_meal.id
+        await session.refresh(meal)  # This populates the meal.id
     return meal
 
 
@@ -82,3 +82,18 @@ async def retrieve_meal(meal_id: int):
             raise HTTPException(status_code=404, detail="Meal with this ID could not be found.")
         else:
             return MealReadModel.model_validate(meal)
+
+
+@app.patch("/api/meals/{meal_id}", response_model=MealReadModel)
+async def update_meal(updated_meal: MealReadModel):
+    async with AsyncSession(engine) as session:
+        meal = await session.get(Meal, updated_meal.id)
+        if not meal:
+            raise HTTPException(status_code=404, detail="Meal with this ID could not be found.")
+        else:
+            update_data = updated_meal.model_dump(exclude_unset=True)  # Exclude unset just in case...
+            for key, value in update_data.items():
+                setattr(meal, key, value)
+            await session.commit()
+            await session.refresh(meal)
+    return meal
