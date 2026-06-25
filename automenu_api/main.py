@@ -64,6 +64,11 @@ async def authenticate(username: Annotated[str, Form()], password: Annotated[str
     return jwt
 
 
+@app.put("/api/meals")
+async def create_meal(meal: MealCreateModel):
+    return meal
+
+
 @app.get("/api/meals/{meal_id}")
 async def get_meal(meal_id: int):
     async with AsyncSession(engine) as session:
