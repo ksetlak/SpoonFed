@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpoonFed Admin</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    body { font-family: sans-serif; max-width: 700px; margin: 2rem auto; padding: 0 1rem; }
+    label { display: block; margin-top: 0.5rem; font-weight: bold; }
+    input, textarea { width: 100%; box-sizing: border-box; margin-top: 0.2rem; }
+    textarea { height: 8em; }
+    button { margin-top: 0.5rem; margin-right: 0.5rem; }
+    .section { border: 1px solid #ddd; border-radius: 6px; padding: 1rem; margin-bottom: 1.5rem; }
+    .section h2 { margin-top: 0; }
+    #error { color: red; margin-top: 1rem; }
+    #msg { color: green; margin-top: 1rem; }
+    #preview { line-height: 1.6; }
+    #preview h1 { margin-bottom: 0.2em; }
+    .nutrients { list-style: none; padding: 0; display: flex; gap: 1.5em; }
+    .nutrients li { background: #f0f0f0; padding: 0.3em 0.8em; border-radius: 4px; }
+    #login-section { max-width: 350px; margin: 4rem auto; }
+    #admin-panel { display: none; }
+    .action-bar { display: flex; gap: 0.5rem; align-items: center; }
+  </style>
+</head>
+<body>
+
+  <div id="login-section">
+    <h2>Admin Login</h2>
+    <label for="username">Username</label>
+    <input type="text" id="username">
+    <label for="password">Password</label>
+    <input type="password" id="password">
+    <button id="login-btn">Log In</button>
+    <div id="login-error"></div>
+  </div>
+
+  <div id="admin-panel">
+
+    <div class="section">
+      <h2>Preview Meal</h2>
+      <div class="action-bar">
+        <input type="number" id="preview-id" placeholder="Meal ID" style="width:8em">
+        <button id="preview-btn">Preview</button>
+        <button id="logout-btn" style="margin-left:auto">Log Out</button>
+      </div>
+      <div id="preview"></div>
+    </div>
+
+    <div class="section">
+      <h2>Create Meal</h2>
+      <label for="c-name">Name</label>
+      <input type="text" id="c-name">
+      <label for="c-recipe">Recipe (Markdown)</label>
+      <textarea id="c-recipe"></textarea>
+      <label for="c-calories">Calories</label>
+      <input type="number" id="c-calories">
+      <label for="c-carbs">Carbs (g)</label>
+      <input type="number" step="0.1" id="c-carbs">
+      <label for="c-fat">Fat (g)</label>
+      <input type="number" step="0.1" id="c-fat">
+      <label for="c-protein">Protein (g)</label>
+      <input type="number" step="0.1" id="c-protein">
+      <button id="create-btn">Create</button>
+    </div>
+
+    <div class="section">
+      <h2>Update Meal</h2>
+      <label for="u-id">Meal ID</label>
+      <input type="number" id="u-id" style="width:8em">
+      <button id="u-load-btn">Load</button>
+      <label for="u-name">Name</label>
+      <input type="text" id="u-name">
+      <label for="u-recipe">Recipe (Markdown)</label>
+      <textarea id="u-recipe"></textarea>
+      <label for="u-calories">Calories</label>
+      <input type="number" id="u-calories">
+      <label for="u-carbs">Carbs (g)</label>
+      <input type="number" step="0.1" id="u-carbs">
+      <label for="u-fat">Fat (g)</label>
+      <input type="number" step="0.1" id="u-fat">
+      <label for="u-protein">Protein (g)</label>
+      <input type="number" step="0.1" id="u-protein">
+      <button id="update-btn">Update</button>
+    </div>
+
+    <div class="section">
+      <h2>Delete Meal</h2>
+      <div class="action-bar">
+        <input type="number" id="d-id" placeholder="Meal ID" style="width:8em">
+        <button id="delete-btn">Delete</button>
+      </div>
+    </div>
+
+    <div id="msg"></div>
+    <div id="error"></div>
+  </div>
+
+  <script>
+    const API = 'http://127.0.0.1:8000';
+    let token = localStorage.getItem('token');
+
+    const $ = id => document.getElementById(id);
+    const loginSection = $('login-section');
+    const adminPanel = $('admin-panel');
+    const errorDiv = $('error');
+    const msgDiv = $('msg');
+    const loginError = $('login-error');
+
+    function clearMsgs() { errorDiv.textContent = ''; msgDiv.textContent = ''; loginError.textContent = ''; }
+
+    function authHeaders() {
+      return { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+    }
+
+    function showMealPreview(data, container) {
+      container.innerHTML =
+        `<h1>${data.name}</h1>` +
+        marked.parse(data.recipe) +
+        `<ul class="nutrients">` +
+        `<li>Calories: ${data.calories}</li>` +
+        `<li>Fat: ${data.fat}g</li>` +
+        `<li>Carbs: ${data.carbs}g</li>` +
+        `<li>Protein: ${data.protein}g</li>` +
+        `</ul>`;
+    }
+
+    function showPanel() {
+      loginSection.style.display = 'none';
+      adminPanel.style.display = 'block';
+    }
+
+    function hidePanel() {
+      loginSection.style.display = 'block';
+      adminPanel.style.display = 'none';
+      token = null;
+      localStorage.removeItem('token');
+    }
+
+    if (token) showPanel();
+
+    // --- Login ---
+    $('login-btn').addEventListener('click', async () => {
+      clearMsgs();
+      try {
+        const form = new URLSearchParams();
+        form.append('username', $('username').value);
+        form.append('password', $('password').value);
+        const res = await fetch(`${API}/auth/login`, { method: 'POST', body: form, headers: { 'Content-Type': 'application/x-www-form-urlencoded' } });
+        if (!res.ok) { loginError.textContent = 'Invalid credentials.'; return; }
+        token = await res.text();
+        localStorage.setItem('token', token);
+        showPanel();
+      } catch { loginError.textContent = 'Could not reach the server.'; }
+    });
+
+    // --- Logout ---
+    $('logout-btn').addEventListener('click', () => { clearMsgs(); hidePanel(); });
+
+    // --- Preview ---
+    $('preview-btn').addEventListener('click', async () => {
+      clearMsgs();
+      const id = $('preview-id').value.trim();
+      if (!id) { errorDiv.textContent = 'Enter a meal ID.'; return; }
+      try {
+        const res = await fetch(`${API}/api/meals/${id}`);
+        const data = await res.json();
+        if (!res.ok) { errorDiv.textContent = data.detail || 'Not found.'; return; }
+        showMealPreview(data, $('preview'));
+      } catch { errorDiv.textContent = 'Could not reach the server.'; }
+    });
+
+    // --- Create ---
+    $('create-btn').addEventListener('click', async () => {
+      clearMsgs();
+      const body = {
+        name: $('c-name').value,
+        recipe: $('c-recipe').value,
+        calories: parseInt($('c-calories').value),
+        carbs: parseFloat($('c-carbs').value),
+        fat: parseFloat($('c-fat').value),
+        protein: parseFloat($('c-protein').value),
+      };
+      try {
+        const res = await fetch(`${API}/api/meals`, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) });
+        const data = await res.json();
+        if (!res.ok) { errorDiv.textContent = data.detail || 'Create failed.'; return; }
+        msgDiv.textContent = `Meal created (ID ${data.id}).`;
+        ['c-name','c-recipe','c-calories','c-carbs','c-fat','c-protein'].forEach(id => $(id).value = '');
+      } catch { errorDiv.textContent = 'Could not reach the server.'; }
+    });
+
+    // --- Load for update ---
+    $('u-load-btn').addEventListener('click', async () => {
+      clearMsgs();
+      const id = $('u-id').value.trim();
+      if (!id) { errorDiv.textContent = 'Enter a meal ID.'; return; }
+      try {
+        const res = await fetch(`${API}/api/meals/${id}`);
+        const data = await res.json();
+        if (!res.ok) { errorDiv.textContent = data.detail || 'Not found.'; return; }
+        $('u-name').value = data.name;
+        $('u-recipe').value = data.recipe;
+        $('u-calories').value = data.calories;
+        $('u-carbs').value = data.carbs;
+        $('u-fat').value = data.fat;
+        $('u-protein').value = data.protein;
+      } catch { errorDiv.textContent = 'Could not reach the server.'; }
+    });
+
+    // --- Update ---
+    $('update-btn').addEventListener('click', async () => {
+      clearMsgs();
+      const id = parseInt($('u-id').value);
+      const body = {
+        id,
+        name: $('u-name').value,
+        recipe: $('u-recipe').value,
+        calories: parseInt($('u-calories').value),
+        carbs: parseFloat($('u-carbs').value),
+        fat: parseFloat($('u-fat').value),
+        protein: parseFloat($('u-protein').value),
+      };
+      try {
+        const res = await fetch(`${API}/api/meals/${id}`, { method: 'PATCH', headers: authHeaders(), body: JSON.stringify(body) });
+        const data = await res.json();
+        if (!res.ok) { errorDiv.textContent = data.detail || 'Update failed.'; return; }
+        msgDiv.textContent = 'Meal updated.';
+      } catch { errorDiv.textContent = 'Could not reach the server.'; }
+    });
+
+    // --- Delete ---
+    $('delete-btn').addEventListener('click', async () => {
+      clearMsgs();
+      const id = $('d-id').value.trim();
+      if (!id) { errorDiv.textContent = 'Enter a meal ID.'; return; }
+      try {
+        const res = await fetch(`${API}/api/meals/${id}`, { method: 'DELETE', headers: authHeaders() });
+        if (res.status === 204) { msgDiv.textContent = 'Meal deleted.'; $('d-id').value = ''; return; }
+        const data = await res.json();
+        errorDiv.textContent = data.detail || 'Delete failed.';
+      } catch { errorDiv.textContent = 'Could not reach the server.'; }
+    });
+  </script>
+</body>
+</html>

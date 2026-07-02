@@ -1,5 +1,5 @@
 [project]
-name = "automenu-api"
+name = "automenu_api"
 version = "0.1.0"
 description = "The backend for the SpoonFed meal planning app."
 readme = "../README.md"
@@ -7,15 +7,34 @@ authors = [{ name = "Krzysiek Setlak", email = "bigfoot19@wp.pl" }]
 requires-python = ">=3.12"
 dependencies = [
     "asyncpg>=0.31.0",
+    "bcrypt>=5.0.0",
     "fastapi[standard]>=0.136.3",
+    "pydantic-settings>=2.14.1",
+    "pyjwt>=2.13.0",
     "sqlalchemy[asyncio]>=2.0.50",
 ]
 
 [dependency-groups]
 dev = [
     "pre-commit>=4.6.0",
+    "pytest>=9.1.1",
     "ruff>=0.15.17",
 ]
+
+## Build
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+[tool.hatch.build.targets.wheel]
+packages = ["automenu_api"]
+
+# FastAPI
+[tool.fastapi]
+entrypoint = "main:app"
+
+# pytest
+[tool.pytest.ini_options]
+pythonpath = ["."]
 
 ## Ruff
 [tool.ruff]
@@ -39,6 +58,3 @@ select = [
 [tool.ruff.lint.per-file-ignores]
 # Allow asserts in tests
 "tests/**/*.py" = ["S101"]
-
-[tool.fastapi]
-entrypoint = "main:app"
