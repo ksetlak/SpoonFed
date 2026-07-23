@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, Form, HTTPException, status
@@ -9,12 +10,12 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config import settings
-from db import connect_db
+from db import get_db_session, init_engine
 from models import Meal, User
 from security import create_access_token, validate_access_token, verify_password
 
 
-class MealBase(BaseModel):
+class MealBase(BaseModel):  # TODO: Move to a separate schemas file.
     name: str
     recipe: str
     calories: int
@@ -49,7 +50,14 @@ async def verify_admin_access(token: Annotated[str, Depends(oauth2_scheme)]):
     return int(decoded_token["sub"]) == 1
 
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    app.state.engine = init_engine()
+    yield
+    await app.state.engine.dispose()
+
+
+app = FastAPI(lifespan=lifespan)
 
 origins = [
     "*"
@@ -64,17 +72,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-engine = connect_db()
-
 
 @app.post("/auth/login")
-async def authenticate(username: Annotated[str, Form()], password: Annotated[str, Form()]):
-    async with AsyncSession(engine) as session:
-        result = await session.scalars(select(User).where(User.username == username))
-        user = result.one_or_none()
+async def authenticate(
+    username: Annotated[str, Form()],
+    password: Annotated[str, Form()],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+):
+    result = await session.scalars(select(User).where(User.username == username))
+    user = result.one_or_none()
     if not user:
         raise HTTPException(status_code=401, detail="Invalid username or password.")
-    authenticated: bool = verify_password(user.hashed_password, user.password_salt, password)
+    authenticated = verify_password(
+        user.hashed_password, user.password_salt, password
+    )  # TODO: Ruff should catch `authenticated: bool`;
+    # Add ty / pyright / mypy / pylance as a type checker and see if it catches it.
     if not authenticated:
         raise HTTPException(status_code=401, detail="Invalid username or password.")
     jwt = create_access_token(user.id)
@@ -82,54 +94,62 @@ async def authenticate(username: Annotated[str, Form()], password: Annotated[str
 
 
 @app.post("/api/meals", response_model=MealReadModel, status_code=status.HTTP_201_CREATED)
-async def create_meal(meal_in: MealCreateModel, admin_authorization: Annotated[bool, Depends(verify_admin_access)]):
+async def create_meal(
+    meal_in: MealCreateModel,
+    admin_authorization: Annotated[bool, Depends(verify_admin_access)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+):
     if not admin_authorization:
         raise HTTPException(status_code=403, detail="Insufficient permissions.")
-    async with AsyncSession(engine) as session:
-        meal = Meal(**meal_in.model_dump())
-        session.add(meal)
-        await session.commit()
-        await session.refresh(meal)  # This populates the meal.id
+    meal = Meal(**meal_in.model_dump())
+    session.add(meal)
+    await session.commit()
+    await session.refresh(meal)  # This populates the meal.id
     return meal
 
 
 @app.get("/api/meals/{meal_id}", status_code=status.HTTP_200_OK)
-async def retrieve_meal(meal_id: int):
-    async with AsyncSession(engine) as session:
-        meal = await session.get(Meal, meal_id)
-        if not meal:
-            raise HTTPException(status_code=404, detail="Meal with this ID could not be found.")
-        else:
-            return MealReadModel.model_validate(meal)
+async def retrieve_meal(meal_id: int, session: Annotated[AsyncSession, Depends(get_db_session)]):
+    meal = await session.get(Meal, meal_id)
+    if not meal:
+        raise HTTPException(status_code=404, detail="Meal with this ID could not be found.")
+    else:
+        return MealReadModel.model_validate(meal)
 
 
 # TODO: meal_id is passed in URL, then id from body is uses. Analyze & fix.
 @app.patch("/api/meals/{meal_id}", response_model=MealReadModel, status_code=status.HTTP_200_OK)
-async def update_meal(updated_meal: MealReadModel, admin_authorization: Annotated[bool, Depends(verify_admin_access)]):
+async def update_meal(
+    updated_meal: MealReadModel,
+    admin_authorization: Annotated[bool, Depends(verify_admin_access)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+):
     if not admin_authorization:
         raise HTTPException(status_code=403, detail="Insufficient permissions.")
-    async with AsyncSession(engine) as session:
-        meal = await session.get(Meal, updated_meal.id)
-        if not meal:
-            raise HTTPException(status_code=404, detail="Meal with this ID could not be found.")
-        else:
-            update_data = updated_meal.model_dump(exclude_unset=True)  # Exclude unset just in case...
-            for key, value in update_data.items():
-                setattr(meal, key, value)
-            await session.commit()
-            await session.refresh(meal)
+    meal = await session.get(Meal, updated_meal.id)
+    if not meal:
+        raise HTTPException(status_code=404, detail="Meal with this ID could not be found.")
+    else:
+        update_data = updated_meal.model_dump(exclude_unset=True)  # Exclude unset just in case...
+        for key, value in update_data.items():
+            setattr(meal, key, value)
+        await session.commit()
+        await session.refresh(meal)
     return meal
 
 
 @app.delete("/api/meals/{meal_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_meal(meal_id: int, admin_authorization: Annotated[bool, Depends(verify_admin_access)]):
+async def delete_meal(
+    meal_id: int,
+    admin_authorization: Annotated[bool, Depends(verify_admin_access)],
+    session: Annotated[AsyncSession, Depends(get_db_session)],
+):
     if not admin_authorization:
         raise HTTPException(status_code=403, detail="Insufficient permissions.")
-    async with AsyncSession(engine) as session:
-        meal = await session.get(Meal, meal_id)
-        if not meal:
-            raise HTTPException(status_code=404, detail="Meal with this ID could not be found.")
-        else:
-            session.delete(meal)
-            await session.commit()
-    return  # Or return None?
+    meal = await session.get(Meal, meal_id)
+    if not meal:
+        raise HTTPException(status_code=404, detail="Meal with this ID could not be found.")
+    else:
+        await session.delete(meal)
+        await session.commit()
+    return  # Or return None?  # TODO Research, decide and edit.
