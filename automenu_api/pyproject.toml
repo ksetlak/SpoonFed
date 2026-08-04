@@ -2,7 +2,6 @@
 name = "automenu_api"
 version = "0.1.0"
 description = "The backend for the SpoonFed meal planning app."
-readme = "../README.md"
 authors = [{ name = "Krzysiek Setlak", email = "bigfoot19@wp.pl" }]
 requires-python = ">=3.12"
 dependencies = [
