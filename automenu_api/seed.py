@@ -3,7 +3,7 @@ from getpass import getpass
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from db import connect_db
+from db import init_engine
 from models import Base, Meal, User
 from security import hash_and_salt_password
 
@@ -87,5 +87,5 @@ async def gathered(engine):
 
 
 if __name__ == "__main__":
-    engine = connect_db()
+    engine = init_engine()
     asyncio.run(gathered(engine))
