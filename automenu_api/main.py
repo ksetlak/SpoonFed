@@ -73,6 +73,11 @@ app.add_middleware(
 )
 
 
+@app.get("/health", include_in_schema=False)
+async def health():
+    return {"status": "ok"}
+
+
 @app.post("/auth/login")
 async def authenticate(
     username: Annotated[str, Form()],
@@ -117,7 +122,7 @@ async def retrieve_meal(meal_id: int, session: Annotated[AsyncSession, Depends(g
         return MealReadModel.model_validate(meal)
 
 
-# TODO: meal_id is passed in URL, then id from body is uses. Analyze & fix.
+# TODO: meal_id is passed in URL, then id from body is used. Analyze & fix.
 @app.patch("/api/meals/{meal_id}", response_model=MealReadModel, status_code=status.HTTP_200_OK)
 async def update_meal(
     updated_meal: MealReadModel,
