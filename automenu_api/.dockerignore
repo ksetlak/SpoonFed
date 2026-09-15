@@ -1,0 +1,15 @@
+__pycache__
+*.pyc
+*.pyw
+*.egg-info
+*.egg
+.pytest_cache
+.mypy_cache
+.coverage
+.hypothesis
+venv
+.env
+.git
+.gitignore
+Dockerfile
+README*
