@@ -1,23 +1,31 @@
-FROM python:3.12-slim
+FROM ghcr.io/astral-sh/uv:python3.12-trixie-slim AS builder
 
 WORKDIR /app
 
-RUN pip install uv
-# Install in the way recommended by the documentation.
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_LINK_MODE=copy
 
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev
-# Multi-stage build: separate preparing dependencies from pulling a finished environment from the runtime.
+RUN uv sync --frozen --no-dev --no-install-project
 
 COPY . .
+RUN uv sync --frozen --no-dev --no-editable
 
-RUN useradd -m appuser
-USER appuser
+FROM python:3.12-slim
+
+# I don't have logging enabled yet, a lot of sources encourage this:
+ENV PYTHONUNBUFFERED=1
+ENV PATH="/app/.venv/bin:$PATH"
+
+WORKDIR /app
+
+COPY --from=builder /app/.venv /app/.venv
+COPY . .
+
+RUN groupadd --system --gid 999 nonroot \
+ && useradd --system --gid 999 --uid 999 --create-home nonroot
+USER nonroot
 
 EXPOSE 8000
 
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8000/health || exit 1
-# Add a 'ready' endpoint.
-
-CMD ["uvicorn", "automenu_api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
