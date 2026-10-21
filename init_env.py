@@ -4,8 +4,10 @@ import secrets
 ENV_FILE = ".env"
 ENV_TEMPLATE = ".env.example"
 
-# Would be cool to use ENV_TEMPLATE as a dynamic template, but how to determine how to populate a field dynamically?
-TEMPLATE_CONTENT = """DATABASE_URL=postgresql+asyncpg://user:PASSWORD_PLACEHOLDER@localhost:5432
+# TODO: Would be cool to use ENV_TEMPLATE as a dynamic template, but how to determine how to populate a field dynamically?
+# TODO: Break DATABASE_URL into POSTGRES_DB, POSTGRES_PASSWORD, POSTGRES_USER, POSTGRES_PORT (?), POSTGRES_HOST (?)
+TEMPLATE_CONTENT = """POSTGRES_PASSWORD=PASSWORD_PLACEHOLDER
+DATABASE_URL=postgresql+asyncpg://spoonfed:PASSWORD_PLACEHOLDER@postgresql:5432/spoonfed
 DEBUG=True
 JWT_ALGORITHM=HS256
 JWT_SECRET_KEY=JWT_SECRET_PLACEHOLDER
