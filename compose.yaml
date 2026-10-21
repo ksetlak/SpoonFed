@@ -1,0 +1,52 @@
+services:
+  automenu-api:
+    container_name: automenu-api
+    image: localhost/automenu-api:latest
+    env_file:
+      - .env
+    build:
+      context: ./automenu_api
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: [ "CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" ]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    # TODO: Add a 'ready' endpoint.
+    depends_on:
+      postgresql:
+        condition: service_healthy
+
+  postgresql:
+    container_name: postgresql
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: spoonfed
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: spoonfed
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "spoonfed", "-d", "spoonfed" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  spoonfed:
+    container_name: spoonfed
+    image: localhost/spoonfed:latest
+    build:
+      context: ./spoonfed
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80" # HTTP 'cos ain't nobody have time for certs and shi...
+    depends_on:
+      automenu-api:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+# TODO: Adjust README
